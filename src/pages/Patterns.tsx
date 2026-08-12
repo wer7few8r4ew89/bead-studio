@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Brush } from 'lucide-react'
+import { Brush, LayoutGrid, Users } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import type { BeadPattern } from '@/data/patterns'
 import { PATTERNS, sizeBucket } from '@/data/patterns'
 import SectionTag from '@/components/SectionTag'
@@ -9,6 +10,7 @@ import FilterBar, { DEFAULT_FILTER } from '@/components/patterns/FilterBar'
 import type { PatternFilter } from '@/components/patterns/FilterBar'
 import PatternCard from '@/components/patterns/PatternCard'
 import PatternDetailDialog from '@/components/patterns/PatternDetailDialog'
+import CommunityGallery from '@/components/community/CommunityGallery'
 
 const PAGE_SIZE = 12
 const H1_WORDS = ['100+', '图案，', '总有', '一款', '想拼']
@@ -50,7 +52,7 @@ function ScatterStats() {
           animate={{ opacity: 1, x: 0, y: 0 }}
           transition={{ delay: 0.4 + 0.018 * i, duration: 0.4, ease: 'easeOut' }}
         >
-          {ch === ' ' ? ' ' : ch}
+          {ch === ' ' ? ' ' : ch}
         </motion.span>
       ))}
     </p>
@@ -58,6 +60,12 @@ function ScatterStats() {
 }
 
 export default function Patterns() {
+  const [tab, setTab] = useState<'library' | 'community'>(() =>
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('tab') === 'community'
+      ? 'community'
+      : 'library',
+  )
   const [filter, setFilter] = useState<PatternFilter>(DEFAULT_FILTER)
   const [visible, setVisible] = useState(PAGE_SIZE)
   const [preview, setPreview] = useState<BeadPattern | null>(null)
@@ -116,23 +124,52 @@ export default function Patterns() {
           从 21 格小图到 57 格大作，每张图都附真实豆色清单。
         </motion.p>
         <ScatterStats />
+
+        {/* 图案库 / 社区作品 切换 */}
+        <div className="mt-8 flex flex-wrap gap-2">
+          {(
+            [
+              { id: 'library', label: '图案库', icon: <LayoutGrid size={14} /> },
+              { id: 'community', label: '社区作品', icon: <Users size={14} /> },
+            ] as const
+          ).map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={cn(
+                'flex cursor-pointer items-center gap-1.5 rounded-full border-2 px-5 py-2.5 text-sm font-bold transition-all',
+                tab === t.id
+                  ? 'shadow-bead active:shadow-bead-pressed border-cherry bg-cherry text-white'
+                  : 'border-ink/20 bg-bead-white text-ink hover:border-cherry hover:text-cherry',
+              )}
+            >
+              {t.icon} {t.label}
+            </button>
+          ))}
+        </div>
       </section>
 
-      {/* Section 2 · 吸顶筛选工具栏 */}
-      <div ref={sentinelRef} className="h-px" aria-hidden="true" />
-      <div className="sticky top-[84px] z-40 px-4 sm:px-6">
-        <div
-          className={`mx-auto max-w-site transition-shadow duration-300 ${
-            stuck ? '[&>div]:shadow-card-hover' : ''
-          }`}
-        >
-          <FilterBar filter={filter} onChange={setFilter} />
-        </div>
-      </div>
+      {/* Section 2 · 吸顶筛选工具栏（仅图案库） */}
+      {tab === 'library' && (
+        <>
+          <div ref={sentinelRef} className="h-px" aria-hidden="true" />
+          <div className="sticky top-[84px] z-40 px-4 sm:px-6">
+            <div
+              className={`mx-auto max-w-site transition-shadow duration-300 ${
+                stuck ? '[&>div]:shadow-card-hover' : ''
+              }`}
+            >
+              <FilterBar filter={filter} onChange={setFilter} />
+            </div>
+          </div>
+        </>
+      )}
 
-      {/* Section 3 · 图案网格 */}
+      {/* Section 3 · 图案网格 / 社区作品 */}
       <section className="mx-auto max-w-site px-4 pb-24 pt-8 sm:px-6">
-        {shown.length === 0 ? (
+        {tab === 'community' ? (
+          <CommunityGallery />
+        ) : shown.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-24 text-center">
             <p className="font-pixel text-xs text-ash pixel-shadow">NO BEADS FOUND</p>
             <p className="text-ink/70">没有找到匹配的图案，试试放宽筛选条件。</p>
@@ -150,7 +187,7 @@ export default function Patterns() {
           </motion.div>
         )}
 
-        {visible < filtered.length && (
+        {tab === 'library' && visible < filtered.length && (
           <div className="mt-12 flex justify-center">
             <BeadButton variant="yolk" onClick={() => setVisible((v) => v + PAGE_SIZE)}>
               加载更多（还有 {filtered.length - visible} 张）
