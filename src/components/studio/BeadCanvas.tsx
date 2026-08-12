@@ -77,6 +77,7 @@ export default function BeadCanvas({
   const drawingRef = useRef(false)
   const lastCellRef = useRef<{ x: number; y: number } | null>(null)
   const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map())
+  const lastTapRef = useRef(0)
   /* 最新 props 快照，供 rAF 渲染读取 */
   const propsRef = useRef({ cols, rows, palette, tool, colorIdx, mirror, gridOn, gridMajor, dotsOn, boardWhite, overlayImg, overlayOpacity })
   propsRef.current = { cols, rows, palette, tool, colorIdx, mirror, gridOn, gridMajor, dotsOn, boardWhite, overlayImg, overlayOpacity }
@@ -452,6 +453,21 @@ export default function BeadCanvas({
     if (tool === 'hand' || spaceRef.current || e.button === 1) {
       const v = viewRef.current
       panningRef.current = { startX: e.clientX, startY: e.clientY, panX: v.panX, panY: v.panY }
+      /* 触摸双击（抓手/平移态）复位视图 */
+      if (e.pointerType === 'touch') {
+        const now = performance.now()
+        if (now - lastTapRef.current < 300) {
+          v.zoom = 1
+          v.panX = 0
+          v.panY = 0
+          setZoomPct(100)
+          panningRef.current = null
+          markDirty()
+          lastTapRef.current = 0
+          return
+        }
+        lastTapRef.current = now
+      }
       return
     }
 
@@ -576,10 +592,10 @@ export default function BeadCanvas({
           : 'crosshair'
 
   return (
-    <div ref={wrapRef} className="absolute inset-0 overflow-hidden">
+    <div ref={wrapRef} className="absolute inset-0 select-none overflow-hidden" style={{ WebkitTouchCallout: 'none' }}>
       <canvas
         ref={canvasRef}
-        style={{ touchAction: 'none', cursor }}
+        style={{ touchAction: 'none', cursor, WebkitUserSelect: 'none', userSelect: 'none' }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endPointer}
@@ -596,7 +612,7 @@ export default function BeadCanvas({
         {zoomPct}%
       </div>
       {/* 右下角坐标指示 */}
-      <div className="pointer-events-none absolute bottom-3 right-3 rounded-tag bg-bead-white/90 px-2.5 py-1 font-mono text-[11px] text-ash shadow-card">
+      <div className="pointer-events-none absolute bottom-3 right-3 hidden rounded-tag bg-bead-white/90 px-2.5 py-1 font-mono text-[11px] text-ash shadow-card sm:block">
         {hoverCell ? `(${String(hoverCell.x + 1).padStart(2, '0')}, ${String(hoverCell.y + 1).padStart(2, '0')})` : '( --, -- )'}
       </div>
       {overlayImg && (
