@@ -43,7 +43,7 @@ export function BeadBall({
       onClick={onClick}
       title={title ?? `${color.code} ${color.name}`}
       className={cn(
-        'bead-ball group relative shrink-0 cursor-pointer transition-all duration-150 hover:scale-[1.15] hover:-translate-y-0.5',
+        'bead-ball group relative shrink-0 cursor-pointer touch-manipulation transition-all duration-150 hover:scale-[1.15] hover:-translate-y-0.5',
         selected && '-translate-y-0.5 ring-[3px] ring-ink ring-offset-2 ring-offset-bead-white',
       )}
       style={{ backgroundColor: color.hex, width: size, height: size }}
@@ -88,7 +88,7 @@ export default function SidePanel(p: SidePanelProps) {
   const editMinutes = Math.floor(p.editMs / 60000)
 
   return (
-    <div className={cn('flex h-full w-full flex-col border-l border-dashed border-ash/25 bg-bead-white')}>
+    <div className={cn('flex h-full w-full flex-col border-ash/25 bg-bead-white lg:border-l lg:border-dashed')}>
       <Tabs defaultValue="palette" className="flex min-h-0 flex-1 flex-col">
         <TabsList className="mx-3 mt-3 grid h-10 shrink-0 grid-cols-3 rounded-full bg-sand p-1">
           <TabsTrigger value="palette" className="rounded-full text-xs font-bold data-[state=active]:bg-bead-white data-[state=active]:text-cherry data-[state=active]:shadow-sm">
@@ -131,7 +131,7 @@ export default function SidePanel(p: SidePanelProps) {
                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: colors[0].c.hex }} />
                     <span className="text-xs font-bold text-ash">{fam.label}</span>
                   </div>
-                  <div className="flex gap-2.5">
+                  <div className="flex flex-wrap gap-2.5">
                     {colors.map(({ c, i }, ci) => (
                       <motion.div
                         key={c.code}
@@ -139,7 +139,7 @@ export default function SidePanel(p: SidePanelProps) {
                         animate={{ y: 0, scale: 1, opacity: 1 }}
                         transition={{ delay: fi * 0.05 + ci * 0.03, type: 'spring', stiffness: 320, damping: 18 }}
                       >
-                        <BeadBall color={c} size={36} selected={p.selected === i} onClick={() => p.onSelect(i)} />
+                        <BeadBall color={c} size={40} selected={p.selected === i} onClick={() => p.onSelect(i)} />
                       </motion.div>
                     ))}
                   </div>
@@ -162,7 +162,7 @@ export default function SidePanel(p: SidePanelProps) {
                 <div className="flex flex-wrap gap-2.5">
                   {customs.map((c) => {
                     const idx = p.palette.indexOf(c)
-                    return <BeadBall key={c.code} color={c} size={36} selected={p.selected === idx} onClick={() => p.onSelect(idx)} />
+                    return <BeadBall key={c.code} color={c} size={40} selected={p.selected === idx} onClick={() => p.onSelect(idx)} />
                   })}
                 </div>
               ) : (
@@ -258,7 +258,7 @@ export default function SidePanel(p: SidePanelProps) {
             <button
               onClick={p.onCopyList}
               disabled={!p.stats.length}
-              className="mt-3 flex h-9 w-full items-center justify-center gap-1.5 rounded-full border-2 border-ink/70 text-sm font-bold text-ink transition-colors hover:border-cherry hover:text-cherry disabled:opacity-30"
+              className="mt-3 flex h-11 w-full touch-manipulation items-center justify-center gap-1.5 rounded-full border-2 border-ink/70 text-sm font-bold text-ink transition-colors hover:border-cherry hover:text-cherry disabled:opacity-30"
             >
               <Copy size={14} /> 复制清单
             </button>

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MutableRefObject } from 'react'
 import { motion } from 'framer-motion'
-import { Copy, Download, FileText, Link2 } from 'lucide-react'
+import { Copy, Download, FileText, Link2, UploadCloud } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { BeadColor } from '@/lib/bead-colors'
 import { renderBlueprint } from '@/lib/studio-export'
+import { patternCounts } from '@/lib/community'
+import UploadDialog from '@/components/community/UploadDialog'
 import {
   Dialog,
   DialogContent,
@@ -13,7 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 
-type ExportMode = 'png' | 'pdf' | 'link'
+type ExportMode = 'png' | 'pdf' | 'link' | 'community'
 
 interface ExportDialogProps {
   open: boolean
@@ -28,6 +30,7 @@ interface ExportDialogProps {
   onDownloadPng: () => void
   onPrintPdf: () => void
   onCopyLink: () => void
+  onToast: (msg: string) => void
 }
 
 export default function ExportDialog({
@@ -43,10 +46,13 @@ export default function ExportDialog({
   onDownloadPng,
   onPrintPdf,
   onCopyLink,
+  onToast,
 }: ExportDialogProps) {
   const [mode, setMode] = useState<ExportMode>('png')
   const previewRef = useRef<HTMLDivElement>(null)
   const [previewKey, setPreviewKey] = useState(0)
+  const [uploadOpen, setUploadOpen] = useState(false)
+  const [gridSnapshot, setGridSnapshot] = useState<Int16Array | null>(null)
 
   /* 打开时生成图纸预览 */
   useEffect(() => {
@@ -70,7 +76,13 @@ export default function ExportDialog({
     { id: 'png', label: 'PNG 图纸', icon: <Download size={14} /> },
     { id: 'pdf', label: 'PDF 打印版', icon: <FileText size={14} /> },
     { id: 'link', label: '分享链接', icon: <Link2 size={14} /> },
+    { id: 'community', label: '上传到模板库', icon: <UploadCloud size={14} /> },
   ]
+
+  const openUpload = () => {
+    setGridSnapshot(gridRef.current.slice())
+    setUploadOpen(true)
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -172,8 +184,42 @@ export default function ExportDialog({
               </div>
             </div>
           )}
+          {mode === 'community' && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 rounded-card bg-sand p-3">
+                <span className="bead-ball h-9 w-9 shrink-0 bg-matcha" aria-hidden="true" />
+                <p className="text-[11px] leading-relaxed text-ash">
+                  将作品（含缩略图与豆色数据）上传到社区模板库，其他豆友可以在图案库中一键开拼。
+                </p>
+              </div>
+              <button
+                onClick={openUpload}
+                disabled={patternCounts(gridRef.current).beadCount === 0}
+                className="shadow-bead active:shadow-bead-pressed flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-matcha font-bold text-white transition-all hover:-translate-y-0.5 hover:bg-[#64AE60] active:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+              >
+                <UploadCloud size={16} /> 上传到模板库
+              </button>
+              {patternCounts(gridRef.current).beadCount === 0 && (
+                <p className="text-center text-[11px] text-ash">画布还是空的，先拼几颗豆再来分享吧。</p>
+              )}
+            </div>
+          )}
         </div>
       </DialogContent>
+
+      {/* 上传到社区模板库 */}
+      {gridSnapshot && (
+        <UploadDialog
+          open={uploadOpen}
+          onOpenChange={setUploadOpen}
+          name={name}
+          cols={cols}
+          rows={rows}
+          grid={gridSnapshot}
+          palette={palette}
+          onToast={onToast}
+        />
+      )}
     </Dialog>
   )
 }
