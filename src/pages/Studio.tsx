@@ -16,6 +16,8 @@ import {
 } from '@/lib/studio-engine'
 import type { TemplateDef, Tool } from '@/lib/studio-engine'
 import { buildListText, downloadCanvasPng, printBlueprint, renderBlueprint } from '@/lib/studio-export'
+import { decodePatternGrid } from '@/lib/community'
+import { trpc } from '@/providers/trpc'
 import BeadCanvas from '@/components/studio/BeadCanvas'
 import TopBar from '@/components/studio/TopBar'
 import ToolRail from '@/components/studio/ToolRail'
@@ -127,6 +129,49 @@ export default function Studio() {
   const [histTick, setHistTick] = useState(0)
 
   const showToast = useCallback((msg: string) => setToast({ msg, key: Date.now() }), [])
+
+  /* ---------- 社区作品载入（?community=<id>） ---------- */
+  const communityId = useMemo(() => {
+    try {
+      const v = new URLSearchParams(window.location.search).get('community')
+      const n = v ? parseInt(v, 10) : NaN
+      return Number.isFinite(n) && n > 0 ? n : null
+    } catch {
+      return null
+    }
+  }, [])
+  const communityQuery = trpc.patterns.get.useQuery(
+    { id: communityId ?? 0 },
+    { enabled: communityId != null, retry: 1, refetchOnWindowFocus: false },
+  )
+
+  useEffect(() => {
+    if (communityId == null) return
+    if (communityQuery.isError) {
+      showToast('社区作品加载失败或已被删除')
+      window.history.replaceState(null, '', window.location.pathname)
+      return
+    }
+    const row = communityQuery.data
+    if (!row) return
+    const d = decodePatternGrid(row.grid)
+    if (!d) {
+      showToast('社区作品数据损坏，无法载入')
+      window.history.replaceState(null, '', window.location.pathname)
+      return
+    }
+    pushHistory()
+    gridRef.current = d.grid
+    setSize({ cols: d.cols, rows: d.rows })
+    setCustoms(d.customs)
+    setName(d.name || row.name)
+    setWelcome(false)
+    bump()
+    setRainKey((k) => k + 1)
+    showToast(`已载入 ${row.author} 的「${row.name}」，开始拼吧！`)
+    window.history.replaceState(null, '', window.location.pathname)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [communityQuery.data, communityQuery.isError, communityId])
 
   useEffect(() => {
     if (!toast) return
@@ -550,6 +595,7 @@ export default function Studio() {
         onDownloadPng={handleDownloadPng}
         onPrintPdf={handlePrintPdf}
         onCopyLink={() => copyText(shareUrl, '分享链接已复制')}
+        onToast={showToast}
       />
 
       {/* 清空确认 */}
