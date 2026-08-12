@@ -50,7 +50,7 @@ function ScatterStats() {
           animate={{ opacity: 1, x: 0, y: 0 }}
           transition={{ delay: 0.4 + 0.018 * i, duration: 0.4, ease: 'easeOut' }}
         >
-          {ch === ' ' ? ' ' : ch}
+          {ch === ' ' ? ' ' : ch}
         </motion.span>
       ))}
     </p>
