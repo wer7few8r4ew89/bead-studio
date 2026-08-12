@@ -1,0 +1,24 @@
+run: 2026-08-12T11:56:35+08:00 (run2 因脚本为空无效，此为正式 v2 首跑)
+cmd: bash verifier/v2/check.sh
+PASS: 1 构建产物存在(dist/index.html)
+PASS: 2 五页面文件存在
+PASS: 2 路由接线完整
+PASS: 3 编辑器 24 色色值齐全
+PASS: 3 豆色材料库 24 色档案
+PASS: 4 图案库数据 >=8 模板
+PASS: 4 模板可载入编辑器
+PASS: 5 画笔工具
+PASS: 5 填充工具
+PASS: 5 取色器
+PASS: 5 橡皮
+PASS: 5 镜像
+PASS: 5 撤销重做
+PASS: 5 用豆统计
+PASS: 5 导出 PNG
+PASS: 5 底板尺寸可选
+PASS: 6 Navbar 5 链接
+PASS: 6 Footer 存在
+PASS: 7 媒体资产 13 项
+PASS: 8 指南 FAQ 手风琴
+PASS: 8 四步教程
+exit:0

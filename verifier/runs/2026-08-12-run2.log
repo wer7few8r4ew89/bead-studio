@@ -1,0 +1,3 @@
+run: 2026-08-12T11:55:45+08:00
+cmd: bash verifier/v2/check.sh
+exit:0
